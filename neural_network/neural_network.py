@@ -14,7 +14,7 @@ class Layer:
         in_size (int): Input dimension.
         out_size (int): Output dimension.
         activation_function (str): Activation function applied to output.
-            Can be on of 'sigmoid', 'relu', 'softmax', 'identity'.
+            Can be one of 'sigmoid', 'relu', 'softmax' or 'identity'.
             Default is 'sigmoid'.
         layer_nr (int): Identifier for layer.
     """
@@ -143,6 +143,15 @@ class Layer:
 
 class NeuralNetwork:
     """Fully connected neural network.
+
+    Args:
+        layer_sizes (list(int)): List of layer sizes. The first value will be the size of the 
+            input layer, the last value will be the size of the output layer. If the list has length 
+            n the network will have n - 1 layers. 
+        activation_functions (list(str)): List of activation functions to use in each layer. 
+            Can be one of 'sigmoid', 'relu', 'softmax' or 'identity'.
+        loss_function (str): Loss function to use in the network. Can be one
+            of 'squared_error' or 'cross_entropy'. Default is 'squared_error'.
     """
     def __init__(self, layer_sizes, activation_functions=[], loss_function='squared_error'):
         self.num_layers = len(layer_sizes)
@@ -156,12 +165,35 @@ class NeuralNetwork:
         self.loss_function, self.loss_diff = loss_functions[loss_function]
         
     def feedforward(self, x):
+        """Computes output of network.
+        Args:
+            x (numpy.array): Input. Should have dimensions (1, layer_sizes[0])
+        Returns:
+            activation (numpy.array): (1, layer_sizes[-1]) array containing the outputs.
+        """
         activation = x.copy()
         for layer in self.layers:
            activation = layer.compute_activation(activation)
         return activation
     
     def predict(self, x, threshold=0.5):
+        """Generates predicted class.
+        Computes the output layer activation, if the shape if the activation is (1, 1)
+        the layers predicts a binary classification problem: either 0 or 1
+        depending on if the activation surpasses the given threshold (default 0.5).
+        
+        If the dimension of the activation vector is greater than 1, the layer predicts
+        the class that corresponds to the position in the vector with the greatest 
+        activation value.
+        
+        Args:
+            x (numpy.array): Input. Should have dimensions (1, layer_sizes[0])
+            threshold (float): Threshold used in binary classification.
+                Default value is 0.5.
+        
+        Returns:
+            predicted_class (int)
+        """
         activation = self.feedforward(x)
         if activation.size == 1:
             # only one output
@@ -171,11 +203,23 @@ class NeuralNetwork:
             return np.argmax(activation)
 
     def backpropagate(self, gradient):
+        """Backpropagates the gradient through the network.
+        Args:
+            gradient (numpy.array): Gradient w.r.t to the output layer.
+        """
         # traverse layers backwards
         for layer in reversed(self.layers):
             gradient = layer.compute_gradient(gradient)
             
     def mini_batch_update(self, xs, ys, lr):
+        """Updates weights in the network.
+        Args:
+            xs (numpy.array): Training example inputs. Should have dimensions 
+                (n, 1, in_size) where n is the number of training examples.
+            ys (numpy.array): Training example outputs. Should have dimensions 
+                (n, 1, layer_sizes[-1]).
+            lr (float): Learning rate.
+        """
         batch_size = ys.shape[0]
 
         for x, y in zip(xs, ys):
@@ -196,7 +240,7 @@ class NeuralNetwork:
         return np.mean(y_pred == y_test_labels)
         
     def compute_loss(self, xs, ys):
-        """
+        """Computes model loss.
         """
         activations = np.array([self.feedforward(x) for x in xs]).reshape(xs.shape[0], -1)
         loss = np.array([self.loss_function(yt, yp) 
@@ -208,6 +252,33 @@ class NeuralNetwork:
             batch_size=32, epochs=20, lr=0.01,
             compute_performance=False,
             verbose=0):
+        """Fit the network using stochastic gradient descent.
+
+        Fits the network to the training data. If test data are provided and `compute_performance` 
+        set to True the loss and accuracy is evaluated on it after each training epoch.
+
+        x_train (numpy.array): Training example inputs. Should have dimensions 
+            (n, 1, in_size) where n is the number of training examples.
+        y_train (numpy.array): Training example outputs. Should have dimensions 
+            (n, 1, layer_sizes[-1]).
+        x_test (numpy.array): Test example outputs. Should have dimensions 
+            (n, 1, layer_sizes[-1]). Optional.
+        y_test (numpy.array): Test example outputs. Should have dimensions 
+            (n, 1, layer_sizes[-1]). Optional.
+        batch_size (int): Number of training examples in each batch.
+            Default is 32
+        epochs (int): Number of times to pass through the training data. 
+            Default is 20.
+        lr (float): Learning rate. Default is 0.01
+        compute_performance (bool): The loss and accuracy on the training and test data 
+            will be computed and stored in a dictionary if set to True. Default is False.
+        verbose (int) The loss and accuracy on the training and test data 
+            will be printed if set to 1. Default is 0
+
+        Returns:
+            history (dict(list)): The loss and accuracy on the training and test data 
+                for each training epoch.
+        """
         
         history = dict(
             train_loss=[],
