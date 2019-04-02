@@ -1,0 +1,6 @@
+cycler==0.10.0
+matplotlib==3.0.3
+-e git+https://github.com/ffagerholm/neural-network.git@d4343917d072bff7d494a7a3f7990cc0afb9c86c#egg=neural_network
+numpy==1.16.2
+scikit-learn==0.20.3
+scipy==1.2.1
