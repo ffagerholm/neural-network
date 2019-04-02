@@ -27,7 +27,7 @@ class Layer:
         
         # initialize weights with normally distributed random values
         self.weights = np.random.normal(size=(self.in_size, self.out_size))
-        
+        # initialize bias vector with uniformly random values
         self.bias = np.random.random(size=(1, self.out_size))
         
         self.init_gradients()
@@ -250,7 +250,8 @@ class NeuralNetwork:
     def fit(self, x_train, y_train,  
             x_test=None, y_test=None,
             batch_size=32, epochs=20, lr=0.01,
-            compute_performance=False,
+            compute_loss=True,
+            compute_accuracy=False,
             verbose=0):
         """Fit the network using stochastic gradient descent.
 
@@ -287,8 +288,9 @@ class NeuralNetwork:
             test_accuracy=[],
         )
 
-        y_test_labels = np.argmax(y_test, axis=1)
-        y_train_labels = np.argmax(y_train, axis=1) 
+        if compute_accuracy:
+            y_test_labels = np.argmax(y_test, axis=1)
+            y_train_labels = np.argmax(y_train, axis=1) 
                 
         # number of rows in the data
         n_obs = y_train.shape[0]
@@ -306,24 +308,28 @@ class NeuralNetwork:
                 # compute the gradients, and update the weights
                 self.mini_batch_update(x_train[batch_ix, :], y_train[batch_ix, :], lr=lr)
             
-            if compute_performance:
+            if compute_loss:
                 # compute loss and accuracy on training (and test data if provided)
                 history['train_loss'].append(self.compute_loss(x_train, y_train))   
-                history['train_accuracy'].append(self.score(x_train, y_train_labels))
-
                 if verbose:
-                    print("Epoch {}: Training loss: {:.4f}, Training accuracy: {:.4f}".format(i, 
-                                                                    history['train_loss'][-1], 
-                                                                    history['train_accuracy'][-1]))
+                    print("Epoch {}: Training loss: {:.4f}".format(i, history['train_loss'][-1]))
+            
+            if compute_accuracy:
+                history['train_accuracy'].append(self.score(x_train, y_train_labels))
+                if verbose:
+                    print("\t Training accuracy: {:.4f}".format(history['train_accuracy'][-1]))
 
-                if np.shape(x_test) and np.shape(y_test):                         
-                    history['test_loss'].append(self.compute_loss(x_test, y_test))   
-                    history['test_accuracy'].append(self.score(x_test, y_test_labels))
-
+            if np.shape(x_test) and np.shape(y_test):                         
+                if compute_loss:
+                    history['test_loss'].append(self.compute_loss(x_test, y_test)) 
                     if verbose:
-                        print("\t Test loss: {:.4f}, Test accuracy: {:.4f}".format(
-                                        history['test_loss'][-1], 
-                                        history['test_accuracy'][-1]))
+                        print("\t Test loss: {:.4f}".format(history['test_accuracy'][-1]))
+
+                if compute_accuracy:
+                    history['test_accuracy'].append(self.score(x_test, y_test_labels))
+                    if verbose:
+                        print("\t Test accuracy: {:.4f}".format(history['test_accuracy'][-1]))
+
         return history
 
     def __repr__(self):
