@@ -44,7 +44,7 @@ class TestNeuralNetwork(unittest.TestCase):
     def setUp(self):
         self.num_layers = np.random.randint(3, 11)
         self.layer_shapes = np.random.randint(1, 20, size=self.num_layers + 1)
-        self.neural_network = neural_network.NeuralNetwork(layer_sizes)
+        self.neural_network = neural_network.NeuralNetwork(self.layer_shapes)
         
     def tearDown(self):
         """Tear down test fixtures, if any."""
@@ -52,6 +52,11 @@ class TestNeuralNetwork(unittest.TestCase):
     def test_number_of_layers(self):
         """Test that network has correct number of layers."""
         self.assertEqual(len(self.neural_network.layers), self.num_layers) 
+
+    def test_layer_shapes(self):
+        """Test that network has correct number of layers."""
+        for size, layer in zip(self.layer_shapes, self.neural_network.layers):
+            self.assertEqual(size, layer.in_size)
 
 
 if __name__ == '__main__':

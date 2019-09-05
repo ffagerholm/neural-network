@@ -126,15 +126,19 @@ class Layer:
         activation_grad = np.dot(grad, self.weights.T)
         return activation_grad       
     
-    def update_weights(self, lr=0.01, batch_size=1.0):
+    def update_weights(self, train_size, lr=0.01, l2=0.0, batch_size=1):
         """Updates layer weights.
         Args: 
             lr (float): Learning rate. Used for controling how large the step in the gradient 
                 decent update should be. Default is 0.01.
-            batch_size (float): Number of examples in batch. Used to normalize the update to the 
+            batch_size (int): Number of examples in batch. Used to normalize the update to the 
                 batch size.
+            l2 (float): L2 regularization strength.
         """
-        self.weights += (lr/batch_size) * self.weights_gradient 
+        # L2 regularization (shrinkage) for weights
+        self.weights *= (1 - lr*(l2/train_size))
+        # Update weights and bias
+        self.weights += (lr/batch_size)*self.weights_gradient 
         self.bias += (lr/batch_size) * self.bias_gradient
     
     def __repr__(self):
@@ -211,7 +215,7 @@ class NeuralNetwork:
         for layer in reversed(self.layers):
             gradient = layer.compute_gradient(gradient)
             
-    def mini_batch_update(self, xs, ys, lr):
+    def mini_batch_update(self, xs, ys, lr, l2, train_size):
         """Updates weights in the network.
         Args:
             xs (numpy.array): Training example inputs. Should have dimensions 
@@ -229,7 +233,8 @@ class NeuralNetwork:
             
         for layer in reversed(self.layers):
             # update weights in layer
-            layer.update_weights(lr=lr, batch_size=batch_size)
+            layer.update_weights(lr=lr, train_size=train_size, 
+                                 batch_size=batch_size, l2=l2)
             # reinitialize gradients
             layer.init_gradients()
 
@@ -249,7 +254,7 @@ class NeuralNetwork:
 
     def fit(self, x_train, y_train,  
             x_test=None, y_test=None,
-            batch_size=32, epochs=20, lr=0.01,
+            batch_size=32, epochs=20, lr=0.01, l2=0.0,
             compute_loss=True,
             compute_accuracy=False,
             verbose=0):
@@ -271,6 +276,7 @@ class NeuralNetwork:
         epochs (int): Number of times to pass through the training data. 
             Default is 20.
         lr (float): Learning rate. Default is 0.01
+        l2 (float): L2 regularization strength.
         compute_performance (bool): The loss and accuracy on the training and test data 
             will be computed and stored in a dictionary if set to True. Default is False.
         verbose (int) The loss and accuracy on the training and test data 
@@ -306,7 +312,9 @@ class NeuralNetwork:
                 
                 # select data using the batch index
                 # compute the gradients, and update the weights
-                self.mini_batch_update(x_train[batch_ix, :], y_train[batch_ix, :], lr=lr)
+                self.mini_batch_update(x_train[batch_ix, :], y_train[batch_ix, :], 
+                                       lr=lr, l2=l2,
+                                       train_size=n_obs)
             
             if compute_loss:
                 # compute loss and accuracy on training (and test data if provided)
@@ -323,7 +331,7 @@ class NeuralNetwork:
                 if compute_loss:
                     history['test_loss'].append(self.compute_loss(x_test, y_test)) 
                     if verbose:
-                        print("\t Test loss: {:.4f}".format(history['test_accuracy'][-1]))
+                        print("\t Test loss: {:.4f}".format(history['test_loss'][-1]))
 
                 if compute_accuracy:
                     history['test_accuracy'].append(self.score(x_test, y_test_labels))

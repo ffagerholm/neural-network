@@ -19,8 +19,9 @@ y_train = y_train.reshape(-1, 1)
 x_test = x_test.reshape(-1, 1, 28*28).astype(np.float32)
 y_test = y_test.reshape(-1, 1)
 
-autoencoder = NeuralNetwork(layer_sizes=[784, 64, 32, 64, 784])
-autoencoder.fit(x_train, x_train, epochs=30, lr=0.8, 
+autoencoder = NeuralNetwork(layer_sizes=[784, 64, 32, 64, 784], 
+                            loss_function='cross_entropy')
+autoencoder.fit(x_train, x_train, epochs=30, lr=0.8, l2=1.0,
                 compute_loss=True, verbose=1)
 
 n_test = x_test.shape[0] 

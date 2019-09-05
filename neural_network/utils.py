@@ -3,12 +3,10 @@ Activation and loss functions.
 Author: Fredrik Fagerholm
 """
 import numpy as np
+from scipy.special import expit as sigmoid
 
 
 # activation functions and their derivatives
-def sigmoid(z):
-    return 1. / (1. + np.exp(-z))
-
 def sigmoid_prime(z):
     return sigmoid(z) * (1 - sigmoid(z))
 

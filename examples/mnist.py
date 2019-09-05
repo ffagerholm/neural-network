@@ -36,8 +36,10 @@ network = NeuralNetwork([784, 16, 10], activation_functions=['sigmoid', 'softmax
 
 history = network.fit(x_train, y_train_encoded, 
                       x_val, y_val_encoded,
-                      batch_size=32, epochs=10, lr=1.5, 
-                      verbose=1, compute_performance=True)
+                      batch_size=32, epochs=20, lr=1.5, l2=1.0,
+                      verbose=1, 
+                      compute_loss=True,
+                      compute_accuracy=True)
 
 
 plot_training_history(history['train_loss'], history['test_loss'], 
