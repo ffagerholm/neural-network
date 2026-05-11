@@ -2,5 +2,5 @@ cycler==0.10.0
 matplotlib==3.0.3
 -e .
 numpy==1.22.0
-scikit-learn==0.20.3
+scikit-learn==1.5.0
 scipy==1.10.0
